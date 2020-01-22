@@ -1,0 +1,6 @@
+#!/bin/bash
+source /home/icart/catkin_ws/devel/setup.bash
+source /home/icart/hoshina_ws/devel/setup.bash
+gnome-terminal -- bash -c "rosrun image_view  extract_images  _sec_per_frame:=0.05 _filename_format:="image%04d.jpg"  image:=/usb_cam/image_raw"
+sleep 3
+gnome-terminal -- bash -c "rosrun image_view key_publisher"
