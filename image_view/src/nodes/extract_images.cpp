@@ -36,6 +36,7 @@
 
 #include <ros/ros.h>
 #include <sensor_msgs/Image.h>
+#include <std_msgs/Int8.h>
 #include <cv_bridge/cv_bridge.h>
 #include <image_transport/image_transport.h>
 
@@ -48,6 +49,7 @@ class ExtractImages
 {
 private:
   image_transport::Subscriber sub_;
+  ros::Subscriber key_sub_;
 
   sensor_msgs::ImageConstPtr last_msg_;
   boost::mutex image_mutex_;
@@ -57,6 +59,8 @@ private:
   int count_;
   double _time;
   double sec_per_frame_;
+  bool do_key_lock_;
+  int key_lock_;
 
 #if defined(_VIDEO)
   CvVideoWriter* video_writer;
@@ -77,6 +81,12 @@ public:
 
     image_transport::ImageTransport it(nh);
     sub_ = it.subscribe(topic, 1, &ExtractImages::image_cb, this, transport);
+
+    ros::NodeHandle key_nh;
+    std::string key_topic = "key_topic";
+    key_sub_ = key_nh.subscribe(key_topic, 1, &ExtractImages::key_cb, this);
+    if(do_key_lock_)key_lock_ = true;
+    else key_lock_ = false;
 
 #if defined(_VIDEO)
     video_writer = 0;
@@ -111,8 +121,10 @@ public:
     }
 
     double delay = ros::Time::now().toSec()-_time;
-    if(delay >= sec_per_frame_)
+
+    if(delay >= sec_per_frame_ && !key_lock_)
     {
+      if(do_key_lock_)key_lock_ = true;
       _time = ros::Time::now().toSec();
 
       if (!image.empty()) {
@@ -159,12 +171,20 @@ public:
       }
     }
   }
+
+  void key_cb(const std_msgs::Int8ConstPtr& msg)
+  {
+    key_lock_ = false;
+  }
 };
+
+
 
 int main(int argc, char **argv)
 {
   ros::init(argc, argv, "extract_images", ros::init_options::AnonymousName);
   ros::NodeHandle n;
+
   if (n.resolveName("image") == "/image") {
     ROS_WARN("extract_images: image has not been remapped! Typical command-line usage:\n"
              "\t$ ./extract_images image:=<image topic> [transport]");
