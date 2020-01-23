@@ -11,6 +11,6 @@ For examples, see the [image_pipeline tutorials entry](http://wiki.ros.org/image
   
 ##使い方
 + カメラからのimageトピックをenter keyを押すたびに保存する  
-画像を生成したい場所で:```rosrun image_view  extract_images  _sec_per_frame:=0.05 _filename_format:="image%04d.jpg"  image:=/usb_cam/image_raw ```
+画像を生成したい場所で:```rosrun image_view  extract_images  _sec_per_frame:=0.05 _filename_format:="image%04d.jpg"  image:=/usb_cam/image_raw ```  
 enter key受付プログラム:```rosrun image_view key_publisher```
 
